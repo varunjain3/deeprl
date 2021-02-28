@@ -11,8 +11,8 @@ import time
 from tools import ReplayMemory
 
 from collections import namedtuple
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
+Transition = namedtuple(
+    'Transition', ('q_state', 'action', 'next_state', 'reward', 'done'))
 
 
 def train_dqn(env):
@@ -146,3 +146,27 @@ def train_dqn(env):
             start = time.time()
 
     return Q, total_losses, total_rewards
+
+
+class NeuralNetwork(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(NeuralNetwork, self).__init__()
+
+        self.n_actions = output_size
+        self.hidden_size = 100
+        self.fc1 = nn.Linear(input_size, self.hidden_size)
+        self.fc2 = nn.Linear(self.hidden_size, self.hidden_size)
+        self.bottle = nn.Linear(self.hidden_size, 3)
+        self.fc3 = nn.Linear(3, self.n_actions)
+
+    def forward(self, x):
+
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        x = self.bottle(x)
+        x = F.relu(x)
+        y = self.fc3(x)
+
+        return y

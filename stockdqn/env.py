@@ -1,5 +1,7 @@
 import torch
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class Environment1:
 
@@ -15,7 +17,8 @@ class Environment1:
         self.positions = []
         self.position_value = 0
         self.history = [0 for _ in range(self.history_t)]
-        return torch.Tensor([self.position_value] + self.history).cuda()  # obs
+        # obs
+        return torch.cuda.FloatTensor([self.position_value] + self.history)
 
     def step(self, act):
         reward = 0
@@ -25,7 +28,7 @@ class Environment1:
             self.positions.append(self.data.iloc[self.t, :]['Close'])
         elif act == 2:  # sell
             if len(self.positions) == 0:
-                reward = -1
+                reward = -10
             else:
                 profits = 0
                 for p in self.positions:
@@ -33,6 +36,9 @@ class Environment1:
                 reward += profits
                 self.profits += profits
                 self.positions = []
+        else:
+            reward = -1
+        # print(reward)
 
         # set next time
         self.t += 1
@@ -43,11 +49,11 @@ class Environment1:
         self.history.append(
             self.data.iloc[self.t, :]['Close'] - self.data.iloc[(self.t-1), :]['Close'])
 
-        # clipping reward
-        if reward > 0:
-            reward = 1
-        elif reward < 0:
-            reward = -1
+        # # clipping reward
+        # if reward > 0:
+        #     reward = 1
+        # elif reward < 0:
+        #     reward = -1
 
         # obs, reward, done
-        return torch.Tensor([self.position_value] + self.history).cuda(), torch.tensor([reward]).cuda(), torch.tensor([self.done]).cuda()
+        return torch.Tensor([self.position_value] + self.history).cuda(), reward, torch.tensor([self.done]).cuda()
